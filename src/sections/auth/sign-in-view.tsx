@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-
+import { useFirebase } from 'src/context/Firebase';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Divider from '@mui/material/Divider';
@@ -17,20 +17,35 @@ import { Iconify } from 'src/components/iconify';
 
 export function SignInView() {
   const router = useRouter();
+   const firebase = useFirebase();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('admin@123.com');
+  const [password, setPassword] = useState('admin@123');
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = useCallback(() => {
-    router.push('/');
-  }, [router]);
+  const handleSignIn = async () => {
+    setLoading(true);
+    try {
+      await firebase.signinUserWithEmailAndPassword(email, password);
+      router.push('/'); 
+    } catch (err) {
+      alert('Enter a valid email or password');
+    } finally{
+      setLoading(false);
+    }
+  };
 
   const renderForm = (
     <Box display="flex" flexDirection="column" alignItems="flex-end">
       <TextField
         fullWidth
+        onChange={ (e) => setEmail(e.target.value)}
+        value={email}
         name="email"
         label="Email address"
-        defaultValue="hello@gmail.com"
+        type='email'
+        placeholder='Enter you email'
         InputLabelProps={{ shrink: true }}
         sx={{ mb: 3 }}
       />
@@ -41,9 +56,11 @@ export function SignInView() {
 
       <TextField
         fullWidth
+        onChange={ (e) => setPassword(e.target.value)}
+        value={password}
         name="password"
         label="Password"
-        defaultValue="@demo1234"
+        placeholder='Password'
         InputLabelProps={{ shrink: true }}
         type={showPassword ? 'text' : 'password'}
         InputProps={{
@@ -66,7 +83,7 @@ export function SignInView() {
         variant="contained"
         onClick={handleSignIn}
       >
-        Sign in
+        {loading ? 'Signing In...' : 'Sign In'}
       </LoadingButton>
     </Box>
   );
@@ -85,7 +102,7 @@ export function SignInView() {
 
       {renderForm}
 
-      <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
+      {/* <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
         <Typography
           variant="overline"
           sx={{ color: 'text.secondary', fontWeight: 'fontWeightMedium' }}
@@ -104,7 +121,7 @@ export function SignInView() {
         <IconButton color="inherit">
           <Iconify icon="ri:twitter-x-fill" />
         </IconButton>
-      </Box>
+      </Box> */}
     </>
   );
 }

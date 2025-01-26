@@ -1,38 +1,32 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, Navigate, useRoutes } from 'react-router-dom';
-
 import Box from '@mui/material/Box';
-import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
-
+import LinearProgress from '@mui/material/LinearProgress';
 import { varAlpha } from 'src/theme/styles';
 import { AuthLayout } from 'src/layouts/auth';
 import { DashboardLayout } from 'src/layouts/dashboard';
+import { useFirebase } from 'src/context/Firebase';
 
-// ----------------------------------------------------------------------
+// Lazy-loaded pages
+const HomePage = lazy(() => import('src/pages/home'));
+const SignInPage = lazy(() => import('src/pages/sign-in'));
+const Page404 = lazy(() => import('src/pages/page-not-found'));
 
-export const HomePage = lazy(() => import('src/pages/home'));
-export const BlogPage = lazy(() => import('src/pages/blog'));
-export const UserPage = lazy(() => import('src/pages/user'));
-export const SignInPage = lazy(() => import('src/pages/sign-in'));
-export const ProductsPage = lazy(() => import('src/pages/products'));
-export const Page404 = lazy(() => import('src/pages/page-not-found'));
-
-// ----------------------------------------------------------------------
-
+// Loading Indicator Component
 const renderFallback = (
   <Box display="flex" alignItems="center" justifyContent="center" flex="1 1 auto">
-    <LinearProgress
-      sx={{
-        width: 1,
-        maxWidth: 320,
-        bgcolor: (theme) => varAlpha(theme.vars.palette.text.primaryChannel, 0.16),
-        [`& .${linearProgressClasses.bar}`]: { bgcolor: 'text.primary' },
-      }}
-    />
+    <LinearProgress sx={{ width: 1, maxWidth: 320 }} />
   </Box>
 );
 
 export function Router() {
+  const { user, loading } = useFirebase(); // Access user authentication state
+
+  // If Firebase is still checking authentication status, show loading
+  if (loading) {
+    return renderFallback;
+  }
+
   return useRoutes([
     {
       element: (
@@ -43,14 +37,14 @@ export function Router() {
         </DashboardLayout>
       ),
       children: [
-        { element: <HomePage />, index: true },
-        { path: 'user', element: <UserPage /> },
-        { path: 'products', element: <ProductsPage /> },
-        { path: 'blog', element: <BlogPage /> },
+        {
+          element: user ? <HomePage /> : <Navigate to="/logout" replace />,
+          index: true
+        },
       ],
     },
     {
-      path: 'sign-in',
+      path: 'logout',
       element: (
         <AuthLayout>
           <SignInPage />

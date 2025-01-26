@@ -2,7 +2,7 @@ import ReactDOM from 'react-dom/client';
 import { Suspense, StrictMode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-
+import { FirebaseProvider } from './context/Firebase';
 import App from './app';
 
 // ----------------------------------------------------------------------
@@ -13,9 +13,11 @@ root.render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
-        <Suspense>
-          <App />
-        </Suspense>
+        <FirebaseProvider>
+          <Suspense>
+            <App />
+          </Suspense>
+        </FirebaseProvider>
       </BrowserRouter>
     </HelmetProvider>
   </StrictMode>
