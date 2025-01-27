@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { Outlet, Navigate, useRoutes } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import LinearProgress from '@mui/material/LinearProgress';
-import { varAlpha } from 'src/theme/styles';
 import { AuthLayout } from 'src/layouts/auth';
 import { DashboardLayout } from 'src/layouts/dashboard';
 import { useFirebase } from 'src/context/Firebase';
@@ -22,12 +21,7 @@ const renderFallback = (
 export function Router() {
   const { user, loading } = useFirebase(); // Access user authentication state
 
-  // If Firebase is still checking authentication status, show loading
-  if (loading) {
-    return renderFallback;
-  }
-
-  return useRoutes([
+  const routes = [
     {
       element: (
         <DashboardLayout>
@@ -38,8 +32,8 @@ export function Router() {
       ),
       children: [
         {
-          element: user ? <HomePage /> : <Navigate to="/logout" replace />,
-          index: true
+          element: loading ? renderFallback : user ? <HomePage /> : <Navigate to="/logout" replace />,
+          index: true,
         },
       ],
     },
@@ -59,5 +53,7 @@ export function Router() {
       path: '*',
       element: <Navigate to="/404" replace />,
     },
-  ]);
+  ];
+
+  return useRoutes(routes);
 }

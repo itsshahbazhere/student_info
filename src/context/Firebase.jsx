@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { initializeApp } from "firebase/app";
+import PropTypes from "prop-types";
+
 import { 
   getAuth, 
   onAuthStateChanged, 
@@ -46,8 +48,8 @@ export const FirebaseProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (student) => {
+      setUser(student);
       setLoading(false);
     });
     return unsubscribe;
@@ -71,7 +73,7 @@ export const FirebaseProvider = ({ children }) => {
     }
   };
 
-  const createUserWithEmailAndPassword = async (email, password) => {
+  const createStudentWithEmailAndPassword = async (email, password) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
       return userCredential.user;
@@ -94,6 +96,7 @@ export const FirebaseProvider = ({ children }) => {
       return await getDocs(collection(firestore, "students"));
     } catch (error) {
       console.error("Error fetching students:", error);
+      return [];
     }
   };
 
@@ -104,6 +107,7 @@ export const FirebaseProvider = ({ children }) => {
       return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } : null;
     } catch (error) {
       console.error("Error fetching student:", error);
+      return [];
     }
   };
 
@@ -126,7 +130,7 @@ export const FirebaseProvider = ({ children }) => {
 
   return (
     <FirebaseContext.Provider 
-      value={{ 
+      value={useMemo(() => ({
         signinUserWithEmailAndPassword, 
         signOutUser, 
         createUserWithEmailAndPassword,
@@ -137,9 +141,14 @@ export const FirebaseProvider = ({ children }) => {
         getStudentById, 
         user, 
         loading
-      }}
+      }), [user, loading])} 
     >
       {children}
     </FirebaseContext.Provider>
   );
+};
+
+// Add PropTypes validation
+FirebaseProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
