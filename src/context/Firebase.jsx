@@ -1,17 +1,32 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, updateDoc, deleteDoc } from "firebase/firestore"; 
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  createUserWithEmailAndPassword 
+} from "firebase/auth";
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  getDocs, 
+  collection, 
+  updateDoc, 
+  deleteDoc 
+} from "firebase/firestore"; 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDL1_lOOmT5X0m6z0lK3k5_IaQNuhJ1FDE",
-  authDomain: "student-app-dca16.firebaseapp.com",
-  projectId: "student-app-dca16",
-  storageBucket: "student-app-dca16.firebasestorage.app",
-  messagingSenderId: "244121872965",
-  appId: "1:244121872965:web:11808da621455dfb0ad12c",
-  measurementId: "G-KJ7M09YHD1",
-  databaseURL: "https://student-app-dca16-default-rtdb.firebaseio.com/",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
 };
 
 // Initialize Firebase
@@ -38,27 +53,50 @@ export const FirebaseProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // **Create a new student record**
+  const signinUserWithEmailAndPassword = async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      return userCredential.user;
+    } catch (error) {
+      console.error("Error signing in:", error.message);
+      throw error;
+    }
+  };
+
+  const signOutUser = async () => {
+    try {
+      await signOut(firebaseAuth);
+    } catch (error) {
+      console.error("Error signing out:", error.message);
+    }
+  };
+
+  const createUserWithEmailAndPassword = async (email, password) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      return userCredential.user;
+    } catch (error) {
+      console.error("Error creating user:", error.message);
+      throw error;
+    }
+  };
+
   const createStudent = async (studentData) => {
     try {
       await setDoc(doc(firestore, "students", studentData.studentID), studentData);
-      console.log("Student added successfully!");
     } catch (error) {
       console.error("Error adding student:", error);
     }
   };
 
-  // **Retrieve all students from Firestore**
   const listStudentData = async () => {
     try {
-      const querySnapshot = await getDocs(collection(firestore, "students"));
-      return querySnapshot;
+      return await getDocs(collection(firestore, "students"));
     } catch (error) {
       console.error("Error fetching students:", error);
     }
   };
 
-  // **Retrieve a single student by ID**
   const getStudentById = async (studentID) => {
     try {
       const docRef = doc(firestore, "students", studentID);
@@ -69,38 +107,18 @@ export const FirebaseProvider = ({ children }) => {
     }
   };
 
-  // **Update student record**
   const updateStudent = async (studentID, updatedData) => {
-  try {
-    const studentRef = doc(firestore, "students", studentID);
-    const docSnap = await getDoc(studentRef);
-    
-    if (!docSnap.exists()) {
-      console.log("No document found to update!");
-      return;
+    try {
+      const studentRef = doc(firestore, "students", studentID);
+      await updateDoc(studentRef, updatedData);
+    } catch (error) {
+      console.error("Error updating student:", error);
     }
+  };
 
-    // Update document in Firestore
-    await updateDoc(studentRef, updatedData);
-    console.log("Student updated successfully!");
-
-    // Optionally, refetch data to update UI from Firestore after the update
-    const updatedDoc = await getDoc(studentRef);
-    if (updatedDoc.exists()) {
-      // Update the state to reflect the changes
-      console.log("Updated document:", updatedDoc.data());
-    }
-  } catch (error) {
-    console.error("Error updating student:", error);
-  }
-};
-
-
-  // **Delete a student record**
   const deleteStudent = async (studentID) => {
     try {
       await deleteDoc(doc(firestore, "students", studentID));
-      console.log("Student deleted successfully!");
     } catch (error) {
       console.error("Error deleting student:", error);
     }
@@ -109,6 +127,9 @@ export const FirebaseProvider = ({ children }) => {
   return (
     <FirebaseContext.Provider 
       value={{ 
+        signinUserWithEmailAndPassword, 
+        signOutUser, 
+        createUserWithEmailAndPassword,
         createStudent, 
         updateStudent, 
         deleteStudent, 
